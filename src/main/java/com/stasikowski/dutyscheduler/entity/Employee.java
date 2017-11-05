@@ -1,4 +1,4 @@
-package com.stasikowski.dutyscheduler;
+package com.stasikowski.dutyscheduler.entity;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -12,16 +12,21 @@ import java.util.List;
 @EqualsAndHashCode(of = "name")
 public class Employee {
 
-    String name;
-    List<LocalDate> blackLists = new ArrayList<>();
-    List<LocalDate> scheduledWeekDays = new ArrayList<>();
-    List<LocalDate> scheduledFreeDays = new ArrayList<>();
+    private String name;
+    private int minNumberOfDuties;
+    private int maxNumberOfDuties;
+    private List<LocalDate> blackLists = new ArrayList<>();
+    private List<LocalDate> scheduledWeekDays = new ArrayList<>();
+    private List<LocalDate> scheduledFreeDays = new ArrayList<>();
 
     public int scheduledWeekDaysSize() {
         return scheduledWeekDays.size();
     }
     public int scheduledFreeDaysSize() {
         return scheduledFreeDays.size();
+    }
+    public int scheduledDaysSize() {
+        return scheduledFreeDays.size() + scheduledWeekDays.size();
     }
 
 

@@ -1,24 +1,28 @@
 package com.stasikowski.dutyscheduler;
 
+import com.stasikowski.dutyscheduler.entity.Employee;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
+
 import java.io.*;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * Created by Bartek on 2017-10-26.
- */
+@Slf4j
+@Component
 public class BlackListReader {
 
     public static final String COMMA = ",";
     public static final String X = "x";
 
     public List<Employee> processInputFile(String inputFilePath, YearMonth yearMonth) {
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(inputFilePath))))) {
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                new FileInputStream(inputFilePath)))) {
 
             Optional<String> headerLine = br.lines().findFirst();
             if (headerLine.isPresent()) {
@@ -33,8 +37,14 @@ public class BlackListReader {
                 employee.setName(rows[0]);
 
                 for (int i = 1; i < rows.length; i++) {
+                    if (i == 1) {
+                        employee.setMinNumberOfDuties(Integer.parseInt(rows[i]));
+                    }
+                    if (i == 2) {
+                        employee.setMaxNumberOfDuties(Integer.parseInt(rows[i]));
+                    }
                     if (X.equalsIgnoreCase(rows[i])) {
-                        LocalDate day = LocalDate.of(yearMonth.getYear(), yearMonth.getMonth(), i);
+                        LocalDate day = LocalDate.of(yearMonth.getYear(), yearMonth.getMonth(), i-2);
                         employee.getBlackLists().add(day);
                     }
                 }
@@ -44,6 +54,4 @@ public class BlackListReader {
             throw new IllegalArgumentException("Cannot parse BlackList file", e);
         }
     }
-
-
 }
