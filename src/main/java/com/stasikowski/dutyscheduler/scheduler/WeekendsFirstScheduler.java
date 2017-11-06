@@ -3,6 +3,7 @@ package com.stasikowski.dutyscheduler.scheduler;
 import com.stasikowski.dutyscheduler.entity.DaySchedule;
 import com.stasikowski.dutyscheduler.entity.Employee;
 import com.stasikowski.dutyscheduler.entity.MonthSchedule;
+import com.stasikowski.dutyscheduler.exception.ScheduleNotPosibleException;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,17 +19,32 @@ import java.util.stream.Collectors;
 @Component
 public class WeekendsFirstScheduler implements MonthScheduler{
 
+    public static final int MAX_RETRIES = 100;
     @Autowired
     private CalendarHelper calendarHelper;
 
     @Override
     public MonthSchedule scheduleMonth(YearMonth month, List<Employee> employees) {
+        int count = 0;
+        while (true) {
+            try {
+                employees.forEach(e -> e.clearSchedule());
+                return trySchedulingMonth(month, employees);
+            } catch (ScheduleNotPosibleException e) {
+                if (++count > MAX_RETRIES) {
+                    throw e;
+                }
+            }
+        }
+    }
+
+    private MonthSchedule trySchedulingMonth(YearMonth month, List<Employee> employees) {
         Map<LocalDate, DaySchedule> schedule = new TreeMap<>();
-        List<LocalDate> freeDays = calendarHelper.getOrderedFreeDays(month);
-        freeDays.addAll(calendarHelper.getOrderedWeekDays(month));
+        List<LocalDate> daysOfMonth = calendarHelper.getOrderedFreeDays(month);
+        daysOfMonth.addAll(calendarHelper.getOrderedWeekDays(month));
         Map<LocalDate, List<Employee>> possibleEmployeesPerDay = calendarHelper.getPossibleEmployeesPerDay(month, employees);
 
-        freeDays.forEach(day -> {
+        daysOfMonth.forEach(day -> {
             log.info("Scheduling " + day);
             Set<Employee> crew = getCrewForADay(possibleEmployeesPerDay, day);
             log.info("Selected crew for day {}: {}", day, crew);
@@ -72,14 +88,13 @@ public class WeekendsFirstScheduler implements MonthScheduler{
 
     private CrewCandidates getPreferableEmployees(List<Employee> possibleEmployees, boolean freeDay) {
         CrewCandidates crewCandidates = new CrewCandidates();
-        ToIntFunction<? super Employee> sizeFunction = freeDay ? Employee::scheduledFreeDaysSize : Employee::scheduledDaysSize;
+        ToIntFunction<? super Employee> sizeFunction = getSizeFunction(freeDay);
         int min = possibleEmployees.stream().mapToInt(sizeFunction).min().getAsInt();
 
-        possibleEmployees.sort((e1, e2) -> sizeFunction.applyAsInt(e1) - sizeFunction.applyAsInt(e2));
+        possibleEmployees.sort(Comparator.comparingInt(e -> sizeFunction.applyAsInt(e)));
 
         Map<Integer, Set<Employee>> byCount = possibleEmployees.stream().collect(
-                Collectors.groupingBy(e -> (freeDay ? (Integer) e.scheduledFreeDaysSize() : e.scheduledDaysSize()),
-                        Collectors.toSet()));
+                Collectors.groupingBy(e -> sizeFunction.applyAsInt(e),  Collectors.toSet()));
 
         Set<Employee> employeesWithMinDays = byCount.get(min);
         if (employeesWithMinDays.size() <= 2) {
@@ -94,8 +109,26 @@ public class WeekendsFirstScheduler implements MonthScheduler{
                 crewCandidates.possible.addAll(byNextCount);
             }
             currentCount++;
+
+            if (currentCount == 100) {
+                throw new ScheduleNotPosibleException();
+            }
         }
         return crewCandidates;
+    }
+
+    private ToIntFunction<? super Employee> getSizeFunction(boolean freeDay) {
+
+        if (freeDay) {
+            return e -> e.scheduledFreeDaysSize();
+        } else {
+            return e -> {
+                int curr = e.scheduledDaysSize();
+                int min = e.getMinNumberOfDuties();
+                int max = e.getMaxNumberOfDuties();
+                return (curr >= min ? 0 : curr - min) + curr - max;
+            };
+        }
     }
 
     @ToString

@@ -30,8 +30,13 @@ public class Employee {
     }
 
 
+    public void clearSchedule() {
+        scheduledFreeDays.clear();
+        scheduledWeekDays.clear();
+    }
+
     public String getStatistics() {
-        return "total scheduled: " + (scheduledWeekDaysSize() + scheduledFreeDaysSize()) + ", week: "
+        return name + ": total scheduled: " + (scheduledWeekDaysSize() + scheduledFreeDaysSize()) + ", week: "
                 + scheduledWeekDaysSize() + ", free: " + scheduledFreeDaysSize() + ", days(week): " + scheduledWeekDays
                 + ", days(free) " + scheduledFreeDays;
     }

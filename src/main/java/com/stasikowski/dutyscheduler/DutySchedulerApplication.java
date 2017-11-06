@@ -2,8 +2,8 @@ package com.stasikowski.dutyscheduler;
 
 import com.stasikowski.dutyscheduler.entity.Employee;
 import com.stasikowski.dutyscheduler.entity.MonthSchedule;
-import com.stasikowski.dutyscheduler.scheduler.DayByDayScheduler;
 import com.stasikowski.dutyscheduler.scheduler.SchedulerValidator;
+import com.stasikowski.dutyscheduler.scheduler.SchedulerWriter;
 import com.stasikowski.dutyscheduler.scheduler.WeekendsFirstScheduler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +29,11 @@ public class DutySchedulerApplication implements CommandLineRunner {
     @Autowired
     private SchedulerValidator schedulerValidator;
 
+    @Autowired
+    private SchedulerWriter schedulerWriter;
+
     public static void main(String[] args) {
-		SpringApplication app = new SpringApplication(DutySchedulerApplication.class);
+        SpringApplication app = new SpringApplication(DutySchedulerApplication.class);
         app.setBannerMode(Banner.Mode.OFF);
         app.run(args);
     }
@@ -42,17 +45,12 @@ public class DutySchedulerApplication implements CommandLineRunner {
         }
         log.info("Starting application with arguments {}", Arrays.toString(args));
         YearMonth yearMonthObject = YearMonth.of(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
-//        List<Employee> employees = blackListReader.processInputFile("C:\\Users\\Bartek\\Desktop\\blackList4.csv", yearMonthObject);
+
         List<Employee> employees = blackListReader.processInputFile("blackList.csv", yearMonthObject);
-//        employees.forEach(e -> log.info(e.toString()));
-
-//        MonthSchedule monthSchedule = new DayByDayScheduler().scheduleMonth(yearMonthObject, employees);
-//        monthSchedule.getDaySchedule().forEach(s -> log.info(s.toString()));
-
-        MonthSchedule monthSchedule2  = weekendsFirstScheduler.scheduleMonth(yearMonthObject, employees);
+        MonthSchedule monthSchedule2 = weekendsFirstScheduler.scheduleMonth(yearMonthObject, employees);
         monthSchedule2.getDaySchedule().forEach(s -> log.info(s.toString()));
         employees.forEach(e -> log.info(e.getStatistics()));
-
         schedulerValidator.validate(monthSchedule2);
+        schedulerWriter.writeSchedule(monthSchedule2, employees);
     }
 }
