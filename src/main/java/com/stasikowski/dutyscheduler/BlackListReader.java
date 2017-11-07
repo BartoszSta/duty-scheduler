@@ -1,14 +1,15 @@
 package com.stasikowski.dutyscheduler;
 
 import com.stasikowski.dutyscheduler.entity.Employee;
+import com.stasikowski.dutyscheduler.entity.ScheduleInput;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.List;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -19,19 +20,16 @@ public class BlackListReader {
     public static final String COMMA = ",";
     public static final String X = "x";
 
-    public List<Employee> processInputFile(String inputFilePath, YearMonth yearMonth) {
+    public ScheduleInput processInputFile(String inputFilePath) {
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
                 new FileInputStream(inputFilePath)))) {
 
             Optional<String> headerLine = br.lines().findFirst();
-            if (headerLine.isPresent()) {
-                String[] rows = headerLine.get().split(COMMA);
-                //TODO validate
-            } else {
-                throw new IllegalArgumentException("BlackList file in wrong format");
-            }
-            return br.lines().map((line) -> {
+            String[] headerRows = getHeaderRows(headerLine);
+            YearMonth yearMonth = formatYearMonth(headerRows[0]);
+            validateHeaderRows(headerRows, yearMonth);
+            return new ScheduleInput(yearMonth, br.lines().map((line) -> {
                 String[] rows = line.split(COMMA);
                 Employee employee = new Employee();
                 employee.setName(rows[0]);
@@ -45,13 +43,34 @@ public class BlackListReader {
                     }
                     if (X.equalsIgnoreCase(rows[i])) {
                         LocalDate day = LocalDate.of(yearMonth.getYear(), yearMonth.getMonth(), i-2);
-                        employee.getBlackLists().add(day);
+                        employee.getBlackList().add(day);
                     }
                 }
                 return employee;
-            }).collect(Collectors.toList());
+            }).collect(Collectors.toList()));
         } catch (IOException e) {
             throw new IllegalArgumentException("Cannot parse BlackList file", e);
+        }
+    }
+
+    private void validateHeaderRows(String[] headerRows, YearMonth yearMonth) {
+        // TODO
+    }
+
+    private String[] getHeaderRows(Optional<String> headerLine) {
+        if (headerLine.isPresent()) {
+            return headerLine.get().split(COMMA);
+        } else {
+            throw new IllegalArgumentException("BlackList file in wrong format");
+        }
+    }
+
+    private YearMonth formatYearMonth(String yearMonthStr) {
+        try {
+            return YearMonth.parse(yearMonthStr, DateTimeFormatter.ofPattern("yyyy-MM"));
+        } catch (DateTimeParseException e) {
+            throw new RuntimeException("Wrong value: '" + yearMonthStr + "' of first columnn in header. " +
+                    "It should be in form of year-month for example '2017-11'");
         }
     }
 }

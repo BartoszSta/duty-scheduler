@@ -16,6 +16,7 @@ import java.util.stream.IntStream;
 
 @Slf4j
 @Component
+@Deprecated
 public class DayByDayScheduler implements MonthScheduler {
 
     @Autowired
@@ -51,7 +52,7 @@ public class DayByDayScheduler implements MonthScheduler {
                 log.info("possibleEmployeesForNextDayAfterRemoveAll " + possibleEmployeesForNextDay);
             }
         });
-        return new MonthSchedule(month, schedule);
+        return new MonthSchedule(month, schedule, employees);
     }
 
     private Set<Employee> getCrewForADay(Map<LocalDate, List<Employee>> possibleEmployeesPerDay, LocalDate day) {

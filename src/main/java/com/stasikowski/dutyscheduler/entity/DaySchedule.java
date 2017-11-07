@@ -1,6 +1,7 @@
 package com.stasikowski.dutyscheduler.entity;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -11,6 +12,7 @@ import java.util.Set;
 
 @ToString
 @Getter
+@EqualsAndHashCode(of = "day")
 @AllArgsConstructor
 public final class DaySchedule {
 

@@ -15,7 +15,7 @@ public class Employee {
     private String name;
     private int minNumberOfDuties;
     private int maxNumberOfDuties;
-    private List<LocalDate> blackLists = new ArrayList<>();
+    private List<LocalDate> blackList = new ArrayList<>();
     private List<LocalDate> scheduledWeekDays = new ArrayList<>();
     private List<LocalDate> scheduledFreeDays = new ArrayList<>();
 

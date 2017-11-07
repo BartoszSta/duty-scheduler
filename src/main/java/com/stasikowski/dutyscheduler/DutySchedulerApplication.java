@@ -1,10 +1,8 @@
 package com.stasikowski.dutyscheduler;
 
-import com.stasikowski.dutyscheduler.entity.Employee;
 import com.stasikowski.dutyscheduler.entity.MonthSchedule;
-import com.stasikowski.dutyscheduler.scheduler.SchedulerValidator;
+import com.stasikowski.dutyscheduler.entity.ScheduleInput;
 import com.stasikowski.dutyscheduler.scheduler.SchedulerWriter;
-import com.stasikowski.dutyscheduler.scheduler.WeekendsFirstScheduler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.Banner;
@@ -12,23 +10,14 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.time.YearMonth;
-import java.util.Arrays;
-import java.util.List;
-
 @Slf4j
 @SpringBootApplication
 public class DutySchedulerApplication implements CommandLineRunner {
 
     @Autowired
-    private WeekendsFirstScheduler weekendsFirstScheduler;
-
-    @Autowired
     private BlackListReader blackListReader;
-
     @Autowired
-    private SchedulerValidator schedulerValidator;
-
+    private SchedulerRunner schedulerRunner;
     @Autowired
     private SchedulerWriter schedulerWriter;
 
@@ -40,17 +29,10 @@ public class DutySchedulerApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        if (args.length != 2) {
-            throw new IllegalArgumentException("Please run application with 2 arguments year and month for example: 2018 2");
-        }
-        log.info("Starting application with arguments {}", Arrays.toString(args));
-        YearMonth yearMonthObject = YearMonth.of(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
-
-        List<Employee> employees = blackListReader.processInputFile("blackList.csv", yearMonthObject);
-        MonthSchedule monthSchedule2 = weekendsFirstScheduler.scheduleMonth(yearMonthObject, employees);
-        monthSchedule2.getDaySchedule().forEach(s -> log.info(s.toString()));
-        employees.forEach(e -> log.info(e.getStatistics()));
-        schedulerValidator.validate(monthSchedule2);
-        schedulerWriter.writeSchedule(monthSchedule2, employees);
+        ScheduleInput scheduleInput = blackListReader.processInputFile("scheduleInput.csv");
+        MonthSchedule monthSchedule = schedulerRunner.runSchedule(scheduleInput);
+        monthSchedule.getDaySchedule().forEach(s -> log.info(s.toString()));
+        monthSchedule.getEmployees().forEach(e -> log.info(e.getStatistics()));
+        schedulerWriter.writeSchedule(monthSchedule);
     }
 }

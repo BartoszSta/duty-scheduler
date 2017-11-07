@@ -25,7 +25,7 @@ public class SchedulerWriter {
     @Autowired
     private CalendarHelper calendarHelper;
 
-    public void writeSchedule(MonthSchedule monthSchedule, List<Employee> employees) {
+    public void writeSchedule(MonthSchedule monthSchedule) {
         String fileName = "schedule-" + monthSchedule.getMonth() + "_"
                 + new SimpleDateFormat("yyyyMMddkkmmsss").format(new Date()) + ".csv";
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName, true), "UTF-8"))) {
@@ -43,7 +43,7 @@ public class SchedulerWriter {
             writer.newLine();
             writer.write("Employee, Min, Max, Total, Free, Week, Days");
             writer.newLine();
-            for (Employee employee : employees) {
+            for (Employee employee : monthSchedule.getEmployees()) {
                 TreeSet<LocalDate> scheduledDays = new TreeSet<>(employee.getScheduledWeekDays());
                 scheduledDays.addAll(employee.getScheduledFreeDays());
 

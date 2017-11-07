@@ -25,20 +25,6 @@ public class WeekendsFirstScheduler implements MonthScheduler{
 
     @Override
     public MonthSchedule scheduleMonth(YearMonth month, List<Employee> employees) {
-        int count = 0;
-        while (true) {
-            try {
-                employees.forEach(e -> e.clearSchedule());
-                return trySchedulingMonth(month, employees);
-            } catch (ScheduleNotPosibleException e) {
-                if (++count > MAX_RETRIES) {
-                    throw e;
-                }
-            }
-        }
-    }
-
-    private MonthSchedule trySchedulingMonth(YearMonth month, List<Employee> employees) {
         Map<LocalDate, DaySchedule> schedule = new TreeMap<>();
         List<LocalDate> daysOfMonth = calendarHelper.getOrderedFreeDays(month);
         daysOfMonth.addAll(calendarHelper.getOrderedWeekDays(month));
@@ -72,7 +58,7 @@ public class WeekendsFirstScheduler implements MonthScheduler{
             }
         });
 
-        return new MonthSchedule(month, new ArrayList<>(schedule.values()));
+        return new MonthSchedule(month, new ArrayList<>(schedule.values()), employees);
     }
 
     private Set<Employee> getCrewForADay(Map<LocalDate, List<Employee>> possibleEmployeesPerDay, LocalDate day) {
@@ -111,7 +97,7 @@ public class WeekendsFirstScheduler implements MonthScheduler{
             currentCount++;
 
             if (currentCount == 100) {
-                throw new ScheduleNotPosibleException();
+                throw new ScheduleNotPosibleException("Cannot pick crew candidates for day");
             }
         }
         return crewCandidates;

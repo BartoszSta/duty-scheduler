@@ -19,7 +19,7 @@ import java.util.stream.IntStream;
 public class CalendarHelper {
 
     private HolidayManager holidayManager = HolidayManager.getInstance(ManagerParameters.create(HolidayCalendar.POLAND, null));
-    private static List<DayOfWeek> weekendDays = Arrays.asList(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
+    private static final List<DayOfWeek> weekendDays = Arrays.asList(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
 
     public boolean isFreeDay(LocalDate day) {
         return weekendDays.contains(day.getDayOfWeek()) || holidayManager.isHoliday(day, HolidayType.OFFICIAL_HOLIDAY);
@@ -43,7 +43,7 @@ public class CalendarHelper {
             possibleEmployees.put(LocalDate.of(yearMonth.getYear(), yearMonth.getMonthValue(), dayOfMonth),
                     new ArrayList<>(employees));
         });
-        employees.forEach(employee -> employee.getBlackLists()
+        employees.forEach(employee -> employee.getBlackList()
                 .forEach(blackedDate -> possibleEmployees.get(blackedDate).remove(employee)));
         return possibleEmployees;
     }
