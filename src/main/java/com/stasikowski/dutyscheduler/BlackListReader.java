@@ -55,6 +55,7 @@ public class BlackListReader {
 
     private void validateHeaderRows(String[] headerRows, YearMonth yearMonth) {
         // TODO
+
     }
 
     private String[] getHeaderRows(Optional<String> headerLine) {

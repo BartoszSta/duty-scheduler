@@ -65,6 +65,11 @@ public class WeekendsFirstScheduler implements MonthScheduler{
         List<Employee> possibleEmployees = possibleEmployeesPerDay.get(day);
         possibleEmployees.removeIf(employee -> employee.scheduledDaysSize() == employee.getMaxNumberOfDuties());
         log.info("Possible employees {}", possibleEmployees);
+
+        if (possibleEmployees.isEmpty()) {
+            throw new ScheduleNotPosibleException("Not possible employees for day " + day);
+        }
+
         CrewCandidates crewCandidates = getPreferableEmployees(possibleEmployees, calendarHelper.isFreeDay(day));
         log.info("Crew candidates: {}", crewCandidates);
         Set<Employee> crew = new HashSet<>(crewCandidates.must);
